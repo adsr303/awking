@@ -88,18 +88,18 @@ class TestRangeCollector(TestCase):
 
 class TestRangeProducer(TestCase):
     def test_one_range(self):
-        producer = RangeProducer(lambda x: x == 2, lambda x: x ==3,
+        producer = RangeProducer(lambda x: x == 2, lambda x: x == 3,
                                  [1, 2, 5, 3, 5])
         self.assertEqual([[2, 5, 3]], [list(x) for x in producer])
 
     def test_two_ranges(self):
-        producer = RangeProducer(lambda x: x == 2, lambda x: x ==3,
+        producer = RangeProducer(lambda x: x == 2, lambda x: x == 3,
                                  [1, 2, 5, 3, 5, 2, 4, 4, 3])
         self.assertEqual([[2, 5, 3], [2, 4, 4, 3]],
                          [list(x) for x in producer])
 
     def test_outer_iteration(self):
-        producer = RangeProducer(lambda x: x == 2, lambda x: x ==3,
+        producer = RangeProducer(lambda x: x == 2, lambda x: x == 3,
                                  [1, 2, 5, 3, 5, 2, 4, 4, 3, 6])
         range1 = next(producer)
         range2 = next(producer)
