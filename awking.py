@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from contextlib import closing
-from queue import Queue
+from queue import Queue, SimpleQueue, Empty
 import re
 
 
@@ -136,3 +136,64 @@ class RangeCollector:
     @property
     def output(self):
         return self.sink.output
+
+
+class EndOfRange(Exception):
+    pass
+
+
+class RangeItem:
+    def __init__(self, producer):
+        self.producer = producer
+        self.cache = SimpleQueue()
+
+    def __iter__(self):
+        while True:
+            try:
+                yield self.cache.get_nowait()
+            except Empty:
+                try:
+                    yield self.producer.advance()
+                except EndOfRange:
+                    return
+
+
+class RangeProducer:
+    def __init__(self, first, last, input):
+        self.first = ensure_predicate(first)
+        self.last = ensure_predicate(last)
+        self.input = iter(input)
+        self.current = None
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while True:
+            try:
+                item = next(self.input)
+            except StopIteration as e:
+                raise StopIteration() from e
+            if not self.current:
+                if self.first(item):
+                    self.current = RangeItem(self)
+                    self.current.cache.put(item)
+                    return self.current
+                else:
+                    continue
+            else:
+                self.current.cache.put(item)
+                if self.last(item):
+                    self.current = None
+
+    def advance(self):
+        if not self.current:
+            raise EndOfRange()
+        while True:
+            try:
+                item = next(self.input)
+            except StopIteration as e:
+                raise EndOfRange() from e
+            if self.last(item):
+                self.current = None
+            return item
