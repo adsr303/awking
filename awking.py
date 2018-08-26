@@ -7,9 +7,9 @@ import re
 def ensure_predicate(value):
     if isinstance(value, re.Pattern):
         return value.search
-    elif isinstance(value, str):
+    if isinstance(value, str):
         return re.compile(value).search
-    elif isinstance(value, Callable):
+    if isinstance(value, Callable):
         return value
     raise TypeError(type(value))
 
@@ -22,17 +22,17 @@ class Switchable:
 
 
 class InsideFilter(Switchable):
-    def __call__(self, input):
-        self.action(input)
-        if self.predicate(input):
+    def __call__(self, item):
+        self.action(item)
+        if self.predicate(item):
             return self.opposite
         return self
 
 
 class OutsideFilter(Switchable):
-    def __call__(self, input):
-        if self.predicate(input):
-            self.action(input)
+    def __call__(self, item):
+        if self.predicate(item):
+            self.action(item)
             return self.opposite
         return self
 
@@ -47,8 +47,8 @@ class RangeFilter:
         outside.opposite = inside
         self.action = outside
 
-    def __call__(self, input):
-        self.action = self.action(input)
+    def __call__(self, item):
+        self.action = self.action(item)
 
 
 class ListSink:
@@ -58,12 +58,12 @@ class ListSink:
         self.output = []
         self.current = None
 
-    def __call__(self, input):
-        if self.first(input) and self.current is None:
+    def __call__(self, item):
+        if self.first(item) and self.current is None:
             self.current = []
             self.output.append(self.current)
-        self.current.append(input)
-        if self.last(input) and self.current is not None:
+        self.current.append(item)
+        if self.last(item) and self.current is not None:
             self.current = None
 
     def close(self):
@@ -92,12 +92,12 @@ class QueueSink:
         self.output = IterableQueue()
         self.current = None
 
-    def __call__(self, input):
-        if self.first(input) and self.current is None:
+    def __call__(self, item):
+        if self.first(item) and self.current is None:
             self.current = IterableQueue()
             self.output.put(self.current)
-        self.current.put(input)
-        if self.last(input) and self.current is not None:
+        self.current.put(item)
+        if self.last(item) and self.current is not None:
             self.current.close()
             self.current = None
 
@@ -118,8 +118,8 @@ class RangeCollector:
         self.sink = sink_type(first, last)
         self.filter = RangeFilter(first, last, action=self.sink)
 
-    def __call__(self, input):
-        self.filter(input)
+    def __call__(self, item):
+        self.filter(item)
 
     def __del__(self):
         self.close()
@@ -159,10 +159,10 @@ class RangeItem:
 
 
 class RangeProducer:
-    def __init__(self, first, last, input):
+    def __init__(self, first, last, iterable):
         self.first = ensure_predicate(first)
         self.last = ensure_predicate(last)
-        self.input = iter(input)
+        self.iterable = iter(iterable)
         self.current = None
 
     def __iter__(self):
@@ -171,9 +171,9 @@ class RangeProducer:
     def __next__(self):
         while True:
             try:
-                item = next(self.input)
-            except StopIteration as e:
-                raise StopIteration() from e
+                item = next(self.iterable)
+            except StopIteration as exc:
+                raise StopIteration() from exc
             if not self.current:
                 if self.first(item):
                     self.current = RangeItem(self)
@@ -191,9 +191,9 @@ class RangeProducer:
             raise EndOfRange()
         while True:
             try:
-                item = next(self.input)
-            except StopIteration as e:
-                raise EndOfRange() from e
+                item = next(self.iterable)
+            except StopIteration as exc:
+                raise EndOfRange() from exc
             if self.last(item):
                 self.current = None
             return item
