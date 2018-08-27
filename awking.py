@@ -138,13 +138,13 @@ class RangeCollector:
         return self.sink.output
 
 
-class EndOfRange(Exception):
+class EndOfGroup(Exception):
     pass
 
 
-class RangeItem:
-    def __init__(self, producer):
-        self.producer = producer
+class Group:
+    def __init__(self, grouper):
+        self.grouper = grouper
         self.cache = SimpleQueue()
 
     def __iter__(self):
@@ -153,12 +153,12 @@ class RangeItem:
                 yield self.cache.get_nowait()
             except Empty:
                 try:
-                    yield self.producer.advance()
-                except EndOfRange:
+                    yield self.grouper.next_item()
+                except EndOfGroup:
                     return
 
 
-class RangeProducer:
+class RangeGrouper:
     def __init__(self, first, last, iterable):
         self.first = ensure_predicate(first)
         self.last = ensure_predicate(last)
@@ -172,11 +172,12 @@ class RangeProducer:
         while True:
             try:
                 item = next(self.iterable)
-            except StopIteration as exc:
-                raise StopIteration() from exc
+            except StopIteration:
+                raise StopIteration()
+            # pylint: disable=no-else-return
             if not self.current:
                 if self.first(item):
-                    self.current = RangeItem(self)
+                    self.current = Group(self)
                     self.current.cache.put(item)
                     return self.current
                 else:
@@ -186,14 +187,14 @@ class RangeProducer:
                 if self.last(item):
                     self.current = None
 
-    def advance(self):
+    def next_item(self):
         if not self.current:
-            raise EndOfRange()
+            raise EndOfGroup()
         while True:
             try:
                 item = next(self.iterable)
-            except StopIteration as exc:
-                raise EndOfRange() from exc
+            except StopIteration:
+                raise EndOfGroup()
             if self.last(item):
                 self.current = None
             return item

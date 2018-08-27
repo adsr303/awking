@@ -3,7 +3,7 @@ from unittest import TestCase
 from io import StringIO
 import re
 
-from awking import RangeFilter, RangeCollector, RangeProducer, QueueSink
+from awking import RangeFilter, RangeCollector, RangeGrouper, QueueSink
 
 
 class TestRangeFilter(TestCase):
@@ -86,42 +86,42 @@ class TestRangeCollector(TestCase):
         self.assertEqual([[2, 5, 3], [2, 4, 4, 3]], collector.output)
 
 
-class TestRangeProducer(TestCase):
-    def test_one_range(self):
-        producer = RangeProducer(lambda x: x == 2, lambda x: x == 3,
-                                 [1, 2, 5, 3, 5])
-        self.assertEqual([[2, 5, 3]], [list(x) for x in producer])
+class TestRangeGrouper(TestCase):
+    def test_one_group(self):
+        grouper = RangeGrouper(lambda x: x == 2, lambda x: x == 3,
+                               [1, 2, 5, 3, 5])
+        self.assertEqual([[2, 5, 3]], [list(x) for x in grouper])
 
-    def test_two_ranges(self):
-        producer = RangeProducer(lambda x: x == 2, lambda x: x == 3,
-                                 [1, 2, 5, 3, 5, 2, 4, 4, 3])
+    def test_two_group(self):
+        grouper = RangeGrouper(lambda x: x == 2, lambda x: x == 3,
+                               [1, 2, 5, 3, 5, 2, 4, 4, 3])
         self.assertEqual([[2, 5, 3], [2, 4, 4, 3]],
-                         [list(x) for x in producer])
+                         [list(x) for x in grouper])
 
     def test_outer_iteration(self):
-        producer = RangeProducer(lambda x: x == 2, lambda x: x == 3,
-                                 [1, 2, 5, 3, 5, 2, 4, 4, 3, 6])
-        range1 = next(producer)
-        range2 = next(producer)
+        grouper = RangeGrouper(lambda x: x == 2, lambda x: x == 3,
+                               [1, 2, 5, 3, 5, 2, 4, 4, 3, 6])
+        group1 = next(grouper)
+        group2 = next(grouper)
         with self.assertRaises(StopIteration):
-            next(producer)
-        self.assertEqual([2, 5, 3], list(range1))
-        self.assertEqual([2, 4, 4, 3], list(range2))
+            next(grouper)
+        self.assertEqual([2, 5, 3], list(group1))
+        self.assertEqual([2, 4, 4, 3], list(group2))
 
     def test_regexp(self):
-        producer = RangeProducer(re.compile('a'), re.compile('b'),
-                                 'xf ga zu jd bq zu aa qa gb'.split())
+        grouper = RangeGrouper(re.compile('a'), re.compile('b'),
+                               'xf ga zu jd bq zu aa qa gb'.split())
         self.assertEqual([['ga', 'zu', 'jd', 'bq'], ['aa', 'qa', 'gb']],
-                         [list(x) for x in producer])
+                         [list(x) for x in grouper])
 
     def test_double_start(self):
-        producer = RangeProducer(lambda x: x == 2, lambda x: x == 3,
-                                 [1, 2, 2, 5, 3, 5, 2, 4, 4, 3])
+        grouper = RangeGrouper(lambda x: x == 2, lambda x: x == 3,
+                               [1, 2, 2, 5, 3, 5, 2, 4, 4, 3])
         self.assertEqual([[2, 2, 5, 3], [2, 4, 4, 3]],
-                         [list(x) for x in producer])
+                         [list(x) for x in grouper])
 
     def test_double_end(self):
-        producer = RangeProducer(lambda x: x == 2, lambda x: x == 3,
-                                 [1, 2, 5, 3, 3, 5, 2, 4, 4, 3])
+        grouper = RangeGrouper(lambda x: x == 2, lambda x: x == 3,
+                               [1, 2, 5, 3, 3, 5, 2, 4, 4, 3])
         self.assertEqual([[2, 5, 3], [2, 4, 4, 3]],
-                         [list(x) for x in producer])
+                         [list(x) for x in grouper])
