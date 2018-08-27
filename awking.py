@@ -1,6 +1,7 @@
+from collections import deque
 from collections.abc import Callable
 from contextlib import closing
-from queue import Queue, SimpleQueue, Empty
+from queue import Queue, Empty
 import re
 
 
@@ -145,17 +146,20 @@ class EndOfGroup(Exception):
 class Group:
     def __init__(self, grouper):
         self.grouper = grouper
-        self.cache = SimpleQueue()
+        self.cache = deque()
 
     def __iter__(self):
         while True:
             try:
-                yield self.cache.get_nowait()
-            except Empty:
+                yield self.cache.popleft()
+            except IndexError:
                 try:
                     yield self.grouper.next_item()
                 except EndOfGroup:
                     return
+
+    def append(self, item):
+        self.cache.append(item)
 
 
 class RangeGrouper:
@@ -178,12 +182,12 @@ class RangeGrouper:
             if not self.current:
                 if self.first(item):
                     self.current = Group(self)
-                    self.current.cache.put(item)
+                    self.current.append(item)
                     return self.current
                 else:
                     continue
             else:
-                self.current.cache.put(item)
+                self.current.append(item)
                 if self.last(item):
                     self.current = None
 
