@@ -4,6 +4,27 @@ from io import StringIO
 import re
 
 from awking import RangeFilter, RangeCollector, RangeGrouper, QueueSink
+from awking import ensure_predicate
+
+
+class TestEnsurePredicate(TestCase):
+    def test_string(self):
+        predicate = ensure_predicate('^a')
+        self.assertTrue(callable(predicate))
+
+    def test_regexp(self):
+        predicate = ensure_predicate(re.compile('^a'))
+        self.assertTrue(callable(predicate))
+
+    def test_function(self):
+        def func(param):  # pylint: disable=unused-argument
+            return True
+        predicate = ensure_predicate(func)
+        self.assertTrue(callable(predicate))
+
+    def test_invalid(self):
+        with self.assertRaises(TypeError):
+            ensure_predicate(5)
 
 
 class TestRangeFilter(TestCase):
