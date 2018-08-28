@@ -4,12 +4,12 @@ import re
 
 
 def ensure_predicate(value):
-    if isinstance(value, re.Pattern):
-        return value.search
-    if isinstance(value, str):
-        return re.compile(value).search
     if isinstance(value, Callable):
         return value
+    if isinstance(value, str):
+        return re.compile(value).search
+    if isinstance(value, re.Pattern):
+        return value.search
     raise TypeError(type(value))
 
 
