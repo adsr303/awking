@@ -38,7 +38,8 @@ class TestRangeGrouper(TestCase):
                          [list(x) for x in grouper])
 
     def test_no_match(self):
-        grouper = RangeGrouper(lambda x: x == 2, lambda x: x == 3, [1, 4, 0, 1])
+        grouper = RangeGrouper(lambda x: x == 2, lambda x: x == 3,
+                               [1, 4, 0, 1])
         self.assertEqual([], [list(x) for x in grouper])
 
     def test_outer_iteration(self):
@@ -68,6 +69,11 @@ class TestRangeGrouper(TestCase):
                                [1, 2, 5, 3, 3, 5, 2, 4, 4, 3])
         self.assertEqual([[2, 5, 3], [2, 4, 4, 3]],
                          [list(x) for x in grouper])
+
+    def test_one_item_group(self):
+        grouper = RangeGrouper(lambda x: x == 2, lambda x: x % 2 == 0,
+                               [1, 2, 5, 3, 3, 5, 4, 3])
+        self.assertEqual([[2]], [list(x) for x in grouper])
 
     def test_truncated_last_group(self):
         grouper = RangeGrouper(lambda x: x == 2, lambda x: x == 3,

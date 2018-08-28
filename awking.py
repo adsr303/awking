@@ -55,15 +55,19 @@ class RangeGrouper:
             # pylint: disable=no-else-return
             if not self.current:
                 if self.first(item):
-                    self.current = Group(self)
-                    self.current.append(item)
-                    return self.current
+                    group = Group(self)
+                    self.current = group
+                    self.push_to_current(item)
+                    return group
                 else:
                     continue
             else:
-                self.current.append(item)
-                if self.last(item):
-                    self.current = None
+                self.push_to_current(item)
+
+    def push_to_current(self, item):
+        self.current.append(item)
+        if self.last(item):
+            self.current = None
 
     def next_item(self):
         if not self.current:
