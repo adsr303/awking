@@ -14,7 +14,7 @@ file into a string first. You can also use an AWK script like this one:
 
 /^Payload: <([-_a-zA-Z0-9]+:)?Request/ {
     ofname = "request_" (++index) ".xml"
-    gsub(/^Payload: /, "")
+    sub(/^Payload: /, "")
 }
 
 /<([-_a-zA-Z0-9]+:)?Request/, /<\/([-_a-zA-Z0-9]+:)?Request/ {
@@ -61,3 +61,8 @@ for index, request in enumerate(g, 1):
 The predicates may be regular expressions, either as `re.compile()` objects or
 strings; or they may be any callables that accept a single argument and return
 a true/false value.
+
+## Caveats
+
+The grouping algorithm reads the input iterable lazily. You can still run out
+of memory if you keep references to previous groups without consuming them.
