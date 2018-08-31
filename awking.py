@@ -80,3 +80,32 @@ class RangeGrouper:
             if self.last(item):
                 self.current = None
             return item
+
+
+class LazyRecord:
+    def __init__(self, text, separator=None):
+        self.text = text
+        self.fields = None
+        self.separator = separator
+
+    def __getitem__(self, index):
+        if index is Ellipsis:
+            return self.text
+        self.ensure_split()
+        return self.fields[index]
+
+    def ensure_split(self):
+        if self.fields is None:
+            self.fields = self.text.split(self.separator)
+
+    def __len__(self):
+        self.ensure_split()
+        return len(self.fields)
+
+    def __str__(self):
+        return self.text
+
+    def __repr__(self):
+        return '{}({}{})'.format(type(self).__name__, repr(self.text),
+                                 '' if self.separator is None
+                                 else f', separator={repr(self.separator)}')

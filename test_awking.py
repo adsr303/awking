@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import re
 
-from awking import RangeGrouper, ensure_predicate
+from awking import RangeGrouper, LazyRecord, ensure_predicate
 
 
 class TestEnsurePredicate(TestCase):
@@ -80,3 +80,54 @@ class TestRangeGrouper(TestCase):
                                [1, 2, 5, 3, 3, 5, 2, 4, 4])
         self.assertEqual([[2, 5, 3], [2, 4, 4]],
                          [list(x) for x in grouper])
+
+
+class TestLazyRecord(TestCase):
+    def test_ellipsis(self):
+        text = 'abc def jkzzz'
+        record = LazyRecord(text)
+        self.assertEqual(text, record[...])
+
+    def test_numerical_indices(self):
+        text = 'abc def jkzzz'
+        record = LazyRecord(text)
+        self.assertEqual(('abc', 'jkzzz', 'jkzzz'),
+                         (record[0], record[2], record[-1]))
+
+    def test_out_of_range(self):
+        text = 'abc def jkzzz'
+        record = LazyRecord(text)
+        self.assertEqual(3, len(record))
+        with self.assertRaises(IndexError):
+            record[3]
+
+    def test_separator(self):
+        text = 'abx-something--rrr'
+        record = LazyRecord(text, separator='-')
+        self.assertEqual(text.split('-'), record[:])
+
+    def test_full_range(self):
+        text = 'abc def jkzzz'
+        record = LazyRecord(text)
+        self.assertEqual(text.split(), record[:])
+
+    def test_str(self):
+        text = 'abc def jkzzz'
+        record = LazyRecord(text)
+        self.assertEqual(text, str(record))
+
+    def test_str_separator(self):
+        text = 'abx-something--rrr'
+        record = LazyRecord(text, separator='-')
+        self.assertEqual(text, str(record))
+
+    def test_repr(self):
+        text = 'abc def jkzzz'
+        record = LazyRecord(text)
+        self.assertEqual(f"LazyRecord({repr(text)})", repr(record))
+
+    def test_repr_separator(self):
+        text = 'abx-something--rrr'
+        record = LazyRecord(text, separator='-')
+        self.assertEqual(f"LazyRecord({repr(text)}, separator='-')",
+                         repr(record))
