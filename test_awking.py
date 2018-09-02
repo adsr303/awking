@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import re
 
-from awking import RangeGrouper, LazyRecord, ensure_predicate
+from awking import RangeGrouper, records, LazyRecord, ensure_predicate
 
 
 class TestEnsurePredicate(TestCase):
@@ -85,49 +85,49 @@ class TestRangeGrouper(TestCase):
 class TestLazyRecord(TestCase):
     def test_ellipsis(self):
         text = 'abc def jkzzz'
-        record = LazyRecord(text)
+        record = LazyRecord(text, lambda x: x.split())
         self.assertEqual(text, record[...])
 
     def test_numerical_indices(self):
         text = 'abc def jkzzz'
-        record = LazyRecord(text)
+        record = LazyRecord(text, lambda x: x.split())
         self.assertEqual(('abc', 'jkzzz', 'jkzzz'),
                          (record[0], record[2], record[-1]))
 
     def test_out_of_range(self):
         text = 'abc def jkzzz'
-        record = LazyRecord(text)
+        record = LazyRecord(text, lambda x: x.split())
         self.assertEqual(3, len(record))
         with self.assertRaises(IndexError):
             record[3]
 
-    def test_separator(self):
-        text = 'abx-something--rrr'
-        record = LazyRecord(text, separator='-')
-        self.assertEqual(text.split('-'), record[:])
-
     def test_full_range(self):
         text = 'abc def jkzzz'
-        record = LazyRecord(text)
-        self.assertEqual(text.split(), record[:])
+        record = LazyRecord(text, lambda x: x.split())
+        self.assertEqual(['abc', 'def', 'jkzzz'], record[:])
 
     def test_str(self):
         text = 'abc def jkzzz'
-        record = LazyRecord(text)
+        record = LazyRecord(text, lambda x: x.split())
         self.assertEqual(text, str(record))
 
-    def test_str_separator(self):
-        text = 'abx-something--rrr'
-        record = LazyRecord(text, separator='-')
-        self.assertEqual(text, str(record))
 
-    def test_repr(self):
-        text = 'abc def jkzzz'
-        record = LazyRecord(text)
-        self.assertEqual(f"LazyRecord({repr(text)})", repr(record))
+class TestRecords(TestCase):
+    def test_blank(self):
+        lines = ['abc def jkzzz']
+        self.assertEquals(['abc', 'def', 'jkzzz'], next(records(lines))[:])
 
-    def test_repr_separator(self):
-        text = 'abx-something--rrr'
-        record = LazyRecord(text, separator='-')
-        self.assertEqual(f"LazyRecord({repr(text)}, separator='-')",
-                         repr(record))
+    def test_separator(self):
+        lines = ['abx-something--rrr']
+        self.assertEqual(['abx', 'something', '', 'rrr'],
+                         next(records(lines, separator='-'))[:])
+
+    def test_regexp(self):
+        lines = ['abx-something--rrr']
+        self.assertEqual(['abx', 'something', 'rrr'],
+                         next(records(lines, separator=re.compile('-+')))[:])
+
+    def test_widths(self):
+        lines = ['abx-something--rrr']
+        self.assertEqual(['abx', '-somet', 'hing--', 'rrr'],
+                         next(records(lines, widths=[3, 6, 6, 3]))[:])

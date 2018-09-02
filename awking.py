@@ -1,5 +1,6 @@
 from collections import deque
 from collections.abc import Callable
+from functools import partial
 import re
 
 
@@ -83,10 +84,10 @@ class RangeGrouper:
 
 
 class LazyRecord:
-    def __init__(self, text, separator=None):
+    def __init__(self, text, split):
         self.text = text
         self.fields = None
-        self.separator = separator
+        self.split = split
 
     def __getitem__(self, index):
         if index is Ellipsis:
@@ -96,7 +97,7 @@ class LazyRecord:
 
     def ensure_split(self):
         if self.fields is None:
-            self.fields = self.text.split(self.separator)
+            self.fields = self.split(self.text)
 
     def __len__(self):
         self.ensure_split()
@@ -106,6 +107,32 @@ class LazyRecord:
         return self.text
 
     def __repr__(self):
-        return '{}({}{})'.format(type(self).__name__, repr(self.text),
-                                 '' if self.separator is None
-                                 else f', separator={repr(self.separator)}')
+        return '{}({}, {})'.format(type(self), repr(self.text),
+                                   repr(self.split))
+
+
+def split_columns(columns, text):
+    return [text[begin:end] for begin, end in columns]
+
+
+def make_columns(widths):
+    offset = 0
+    offsets = []
+    for w in widths:
+        offsets.append(offset)
+        offset += w
+    ends = offsets[1:] + [offset]
+    return list(zip(offsets, ends))
+
+
+def records(iterable, *, separator=None, widths=None):
+    if widths:
+        split = partial(split_columns, make_columns(widths))
+    elif isinstance(separator, str):
+        split = lambda text: text.split(separator)
+    elif isinstance(separator, re.Pattern):
+        split = separator.split
+    else:
+        split = lambda text: text.split()
+    for text in iterable:
+        yield LazyRecord(text, split)
