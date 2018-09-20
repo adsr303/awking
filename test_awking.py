@@ -2,7 +2,8 @@ from unittest import TestCase
 
 import re
 
-from awking import RangeGrouper, records, LazyRecord, ensure_predicate
+from awking import RangeGrouper, LazyRecord
+from awking import ensure_predicate, make_columns, records
 
 
 class TestEnsurePredicate(TestCase):
@@ -110,6 +111,14 @@ class TestLazyRecord(TestCase):
         text = 'abc def jkzzz'
         record = LazyRecord(text, lambda x: x.split())
         self.assertEqual(text, str(record))
+
+
+class TestMakeColumns(TestCase):
+    def test_one(self):
+        self.assertEqual([(0, 5)], make_columns([5]))
+
+    def test_two(self):
+        self.assertEqual([(0, 3), (3, 5)], make_columns([3, 2]))
 
 
 class TestRecords(TestCase):
