@@ -120,6 +120,9 @@ class TestMakeColumns(TestCase):
     def test_two(self):
         self.assertEqual([(0, 3), (3, 5)], make_columns([3, 2]))
 
+    def test_tail(self):
+        self.assertEqual([(0, 3), (3, 5), (5, None)], make_columns([3, 2, ...]))
+
 
 class TestRecords(TestCase):
     def test_blank(self):
@@ -140,6 +143,11 @@ class TestRecords(TestCase):
         lines = ['abx-something--rrr']
         self.assertEqual(['abx', '-somet', 'hing--', 'rrr'],
                          next(records(lines, widths=[3, 6, 6, 3]))[:])
+
+    def test_widths_with_tail(self):
+        lines = ['abx-something--rrr']
+        self.assertEqual(['abx', '-somet', 'hing--', 'rrr'],
+                         next(records(lines, widths=[3, 6, 6, ...]))[:])
 
     def test_pattern(self):
         lines = ['abx-something--rrr']

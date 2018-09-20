@@ -120,6 +120,9 @@ def make_columns(widths):
     offsets = []
     for w in widths:
         offsets.append(offset)
+        if w is Ellipsis:
+            offset = None
+            break
         offset += w
     ends = offsets[1:] + [offset]
     return list(zip(offsets, ends))
