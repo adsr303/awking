@@ -131,3 +131,13 @@ class TestRecords(TestCase):
         lines = ['abx-something--rrr']
         self.assertEqual(['abx', '-somet', 'hing--', 'rrr'],
                          next(records(lines, widths=[3, 6, 6, 3]))[:])
+
+    def test_pattern(self):
+        lines = ['abx-something--rrr']
+        self.assertEqual(['abx', 'something', 'rrr'],
+                         next(records(lines, pattern='[a-z]+'))[:])
+
+    def test_pattern_regexp(self):
+        lines = ['abx-something--rrr']
+        self.assertEqual(['abx', 'something', 'rrr'],
+                         next(records(lines, pattern=re.compile('[a-z]+')))[:])

@@ -125,13 +125,17 @@ def make_columns(widths):
     return list(zip(offsets, ends))
 
 
-def records(iterable, *, separator=None, widths=None):
+def records(iterable, *, separator=None, widths=None, pattern=None):
     if widths:
         split = partial(split_columns, make_columns(widths))
     elif isinstance(separator, str):
         split = lambda text: text.split(separator)
     elif isinstance(separator, re.Pattern):
         split = separator.split
+    elif isinstance(pattern, str):
+        split = re.compile(pattern).findall
+    elif isinstance(pattern, re.Pattern):
+        split = pattern.findall
     else:
         split = lambda text: text.split()
     for text in iterable:
