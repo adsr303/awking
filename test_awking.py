@@ -121,7 +121,8 @@ class TestMakeColumns(TestCase):
         self.assertEqual([(0, 3), (3, 5)], make_columns([3, 2]))
 
     def test_tail(self):
-        self.assertEqual([(0, 3), (3, 5), (5, None)], make_columns([3, 2, ...]))
+        self.assertEqual([(0, 3), (3, 5), (5, None)],
+                         make_columns([3, 2, ...]))
 
 
 class TestRecords(TestCase):
