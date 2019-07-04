@@ -5,6 +5,11 @@ import re
 
 
 def ensure_predicate(value):
+    """Tries to convert value into a predicate for RangeGrouper.
+
+    `value` can be a function object, str (assumed to be a regular
+    expression) or re.Pattern.
+    """
     if isinstance(value, Callable):
         return value
     if isinstance(value, str):
@@ -38,9 +43,15 @@ class Group:
 
 
 class RangeGrouper:
-    def __init__(self, first, last, iterable):
-        self.first = ensure_predicate(first)
-        self.last = ensure_predicate(last)
+    """Groups items from an iterable using start/end predicates.
+
+    Each group is an iterator itself. Only as much input as needed is
+    consumed from the iterable.
+    """
+
+    def __init__(self, begin, end, iterable):
+        self.begin = ensure_predicate(begin)
+        self.end = ensure_predicate(end)
         self.iterable = iter(iterable)
         self.current = None
 
@@ -55,7 +66,7 @@ class RangeGrouper:
                 raise StopIteration()
             # pylint: disable=no-else-return
             if not self.current:
-                if self.first(item):
+                if self.begin(item):
                     group = Group(self)
                     self.current = group
                     self.push_to_current(item)
@@ -67,7 +78,7 @@ class RangeGrouper:
 
     def push_to_current(self, item):
         self.current.append(item)
-        if self.last(item):
+        if self.end(item):
             self.current = None
 
     def next_item(self):
@@ -78,12 +89,33 @@ class RangeGrouper:
                 item = next(self.iterable)
             except StopIteration:
                 raise EndOfGroup()
-            if self.last(item):
+            if self.end(item):
                 self.current = None
             return item
 
 
 class LazyRecord:
+    """A list of logical fields found in text.
+
+    Fields are extracted from `text` by applying `split`. A special
+    index `...` (Ellipsis) can be used to retrieve the entire text.
+
+    ```
+    >>> r = LazyRecord('a bb ccc', lambda x: x.split())
+    >>> r[0]
+    a
+    >>> r[-1]
+    ccc
+    >>> r[...]
+    a bb ccc
+    >>> len(r)
+    3
+    ```
+
+    The actual splitting is only done once actually needed (hence the
+    class name).
+    """
+
     def __init__(self, text, split):
         self.text = text
         self.fields = None
@@ -129,6 +161,18 @@ def make_columns(widths):
 
 
 def records(iterable, *, separator=None, widths=None, pattern=None):
+    """Generates LazyRecords from iterable of strings.
+
+    Without extra argumets each string is split on whitespace.
+
+    `separator`: str or re.Pattern on which input will be split
+
+    `widths`: a list of column widths; may end with ... (Ellipsis)
+    which means "remaining characters"
+
+    `pattern`: str (a regular expression) or re.Pattern that describes
+    the contents of each field
+    """
     if widths:
         split = partial(split_columns, make_columns(widths))
     elif isinstance(separator, str):
