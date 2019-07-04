@@ -102,13 +102,13 @@ class LazyRecord:
 
     ```
     >>> r = LazyRecord('a bb ccc', lambda x: x.split())
-    >>> r[0]
+    >>> r[0]       # AWK: $1
     a
-    >>> r[-1]
+    >>> r[-1]      # AWK: $NF
     ccc
-    >>> r[...]
+    >>> r[...]     # AWK: $0
     a bb ccc
-    >>> len(r)
+    >>> len(r)     # AWK: NF
     3
     ```
 
@@ -165,13 +165,13 @@ def records(iterable, *, separator=None, widths=None, pattern=None):
 
     Without extra argumets each string is split on whitespace.
 
-    `separator`: str or re.Pattern on which input will be split
+    `separator`: str or re.Pattern on which input will be split (AWK: FS)
 
     `widths`: a list of column widths; may end with ... (Ellipsis)
-    which means "remaining characters"
+    which means "remaining characters" (AWK: FIELDWIDTHS)
 
     `pattern`: str (a regular expression) or re.Pattern that describes
-    the contents of each field
+    the contents of each field (AWK: FPAT)
     """
     if widths:
         split = partial(split_columns, make_columns(widths))
