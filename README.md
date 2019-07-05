@@ -1,6 +1,84 @@
 # awking
 Make it easier to use Python as an AWK replacement.
 
+## Basic usage
+
+### Extracting groups of lines
+
+```python
+from awking import RangeGrouper
+
+lines = '''
+text 1
+text 2
+group start 1
+text 3
+group end 1
+text 4
+group start 2
+text 5
+group end 2
+text 6
+'''.splitlines()
+
+for group in RangeGrouper('start', 'end', lines):
+    print(list(group))
+```
+
+This will output:
+
+```text
+['group start 1', 'text 3', 'group end 1']
+['group start 2', 'text 5', 'group end 2']
+```
+
+### Extracting fixed-width fields
+
+```python
+from awking import records
+
+ps_aux = '''
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.0  51120  2796 ?        Ss   Dec22   0:09 /usr/lib/systemd/systemd --system --deserialize 22
+root         2  0.0  0.0      0     0 ?        S    Dec22   0:00 [kthreadd]
+root         3  0.0  0.0      0     0 ?        S    Dec22   0:04 [ksoftirqd/0]
+root         5  0.0  0.0      0     0 ?        S<   Dec22   0:00 [kworker/0:0H]
+root         7  0.0  0.0      0     0 ?        S    Dec22   0:15 [migration/0]
+root         8  0.0  0.0      0     0 ?        S    Dec22   0:00 [rcu_bh]
+root         9  0.0  0.0      0     0 ?        S    Dec22   2:47 [rcu_sched]
+saml      3015  0.0  0.0 117756   596 pts/2    Ss   Dec22   0:00 bash
+saml      3093  0.9  4.1 1539436 330796 ?      Sl   Dec22  70:16 /usr/lib64/thunderbird/thunderbird
+saml      3873  0.0  0.1 1482432 8628 ?        Sl   Dec22   0:02 gvim -f
+root      5675  0.0  0.0 124096   412 ?        Ss   Dec22   0:02 /usr/sbin/crond -n
+root      5777  0.0  0.0  51132  1068 ?        Ss   Dec22   0:08 /usr/sbin/wpa_supplicant -u -f /var/log/wpa_supplica
+saml      5987  0.7  1.5 1237740 119876 ?      Sl   Dec26  14:05 /opt/google/chrome/chrome --type=renderer --lang=en-
+root      6115  0.0  0.0      0     0 ?        S    Dec27   0:06 [kworker/0:2]
+'''
+
+for r in records(ps_aux.splitlines(), widths=[7, 58, ...]):
+    print(r[0], r[-1])
+```
+
+This will output:
+
+```text
+USER    COMMAND
+root    /usr/lib/systemd/systemd --system --deserialize 22
+root    [kthreadd]
+root    [ksoftirqd/0]
+root    [kworker/0:0H]
+root    [migration/0]
+root    [rcu_bh]
+root    [rcu_sched]
+saml    bash
+saml    /usr/lib64/thunderbird/thunderbird
+saml    gvim -f
+root    /usr/sbin/crond -n
+root    /usr/sbin/wpa_supplicant -u -f /var/log/wpa_supplica
+saml    /opt/google/chrome/chrome --type=renderer --lang=en-
+root    [kworker/0:2]
+```
+
 ## The problem
 
 Did you ever have to scan a log file for XMLs? How hard was it for you to
@@ -35,7 +113,7 @@ to learn AWK if you don't already know it.)
 But what if you want to build this kind of stuff into your Python application?
 What if your input is not lines in a file but a different type of objects?
 
-## Basic usage
+### Python equivalent using `awking`
 
 The `RangeGrouper` class groups elements from the input iterable based on
 predicates for the start and end element. This is a bit like Perl's range
