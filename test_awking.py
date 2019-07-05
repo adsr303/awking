@@ -128,7 +128,7 @@ class TestMakeColumns(TestCase):
 class TestRecords(TestCase):
     def test_blank(self):
         lines = ['abc def jkzzz']
-        self.assertEquals(['abc', 'def', 'jkzzz'], next(records(lines))[:])
+        self.assertEqual(['abc', 'def', 'jkzzz'], next(records(lines))[:])
 
     def test_separator(self):
         lines = ['abx-something--rrr']

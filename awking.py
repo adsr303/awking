@@ -100,7 +100,6 @@ class LazyRecord:
     Fields are extracted from `text` by applying `split`. A special
     index `...` (Ellipsis) can be used to retrieve the entire text.
 
-    ```
     >>> r = LazyRecord('a bb ccc', lambda x: x.split())
     >>> r[0]       # AWK: $1
     a
@@ -110,7 +109,6 @@ class LazyRecord:
     a bb ccc
     >>> len(r)     # AWK: NF
     3
-    ```
 
     The actual splitting is only done once actually needed (hence the
     class name).
