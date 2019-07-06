@@ -1,15 +1,12 @@
+"""Make it easier to use Python as an AWK replacement."""
+
 from collections import deque
 from collections.abc import Callable
 from functools import partial
 import re
 
 
-def ensure_predicate(value):
-    """Tries to convert value into a predicate for RangeGrouper.
-
-    `value` can be a function object, str (assumed to be a regular
-    expression) or re.Pattern.
-    """
+def _ensure_predicate(value):
     if isinstance(value, Callable):
         return value
     if isinstance(value, str):
@@ -19,11 +16,11 @@ def ensure_predicate(value):
     raise TypeError(type(value))
 
 
-class EndOfGroup(Exception):
+class _EndOfGroup(Exception):
     pass
 
 
-class Group:
+class _Group:
     def __init__(self, grouper):
         self.grouper = grouper
         self.cache = deque()
@@ -34,11 +31,13 @@ class Group:
                 yield self.cache.popleft()
             except IndexError:
                 try:
-                    yield self.grouper.next_item()
-                except EndOfGroup:
+                    # pylint: disable=protected-access
+                    # noinspection PyProtectedMember
+                    yield self.grouper._next_item()
+                except _EndOfGroup:
                     return
 
-    def append(self, item):
+    def append(self, item):  # pylint: disable=missing-docstring
         self.cache.append(item)
 
 
@@ -50,8 +49,8 @@ class RangeGrouper:
     """
 
     def __init__(self, begin, end, iterable):
-        self.begin = ensure_predicate(begin)
-        self.end = ensure_predicate(end)
+        self.begin = _ensure_predicate(begin)
+        self.end = _ensure_predicate(end)
         self.iterable = iter(iterable)
         self.current = None
 
@@ -67,28 +66,28 @@ class RangeGrouper:
             # pylint: disable=no-else-return
             if not self.current:
                 if self.begin(item):
-                    group = Group(self)
+                    group = _Group(self)
                     self.current = group
-                    self.push_to_current(item)
+                    self._push_to_current(item)
                     return group
                 else:
                     continue
             else:
-                self.push_to_current(item)
+                self._push_to_current(item)
 
-    def push_to_current(self, item):
+    def _push_to_current(self, item):
         self.current.append(item)
         if self.end(item):
             self.current = None
 
-    def next_item(self):
+    def _next_item(self):
         if not self.current:
-            raise EndOfGroup()
+            raise _EndOfGroup()
         while True:
             try:
                 item = next(self.iterable)
             except StopIteration:
-                raise EndOfGroup()
+                raise _EndOfGroup()
             if self.end(item):
                 self.current = None
             return item
@@ -100,13 +99,13 @@ class LazyRecord:
     Fields are extracted from `text` by applying `split`. A special
     index `...` (Ellipsis) can be used to retrieve the entire text.
 
-    >>> r = LazyRecord('a bb ccc', lambda x: x.split())
+    >>> r = LazyRecord('a bb ccc', lambda text: text.split())
     >>> r[0]       # AWK: $1
-    a
+    'a'
     >>> r[-1]      # AWK: $NF
-    ccc
+    'ccc'
     >>> r[...]     # AWK: $0
-    a bb ccc
+    'a bb ccc'
     >>> len(r)     # AWK: NF
     3
 
@@ -122,15 +121,15 @@ class LazyRecord:
     def __getitem__(self, index):
         if index is Ellipsis:
             return self.text
-        self.ensure_split()
+        self._ensure_split()
         return self.fields[index]
 
-    def ensure_split(self):
+    def _ensure_split(self):
         if self.fields is None:
             self.fields = self.split(self.text)
 
     def __len__(self):
-        self.ensure_split()
+        self._ensure_split()
         return len(self.fields)
 
     def __str__(self):
@@ -141,40 +140,44 @@ class LazyRecord:
                                    repr(self.split))
 
 
-def split_columns(columns, text):
+def _split_columns(columns, text):
     return [text[begin:end] for begin, end in columns]
 
 
-def make_columns(widths):
+def _make_columns(widths):
     offset = 0
     offsets = []
-    for w in widths:
+    for width in widths:
         offsets.append(offset)
-        if w is Ellipsis:
+        if width is Ellipsis:
             offset = None
             break
-        offset += w
+        offset += width
     ends = offsets[1:] + [offset]
     return list(zip(offsets, ends))
 
 
 def records(iterable, *, separator=None, widths=None, pattern=None):
-    """Generates LazyRecords from iterable of strings.
+    """Generate LazyRecords from iterable of strings.
 
     Without extra arguments each string is split on whitespace.
 
-    `separator`: str or re.Pattern on which input will be split (AWK: FS)
+    Args:
+        iterable: strings
+        separator: str or re.Pattern on which input will be split (AWK: FS)
+        widths: a list of column widths; may end with ... (Ellipsis)
+            which means "remaining characters" (AWK: FIELDWIDTHS)
+        pattern: str (a regular expression) or re.Pattern that describes
+            the contents of each field (AWK: FPAT)
 
-    `widths`: a list of column widths; may end with ... (Ellipsis)
-    which means "remaining characters" (AWK: FIELDWIDTHS)
-
-    `pattern`: str (a regular expression) or re.Pattern that describes
-    the contents of each field (AWK: FPAT)
+    Returns:
+        Iterable of LazyRecords
     """
     if widths:
-        split = partial(split_columns, make_columns(widths))
+        split = partial(_split_columns, _make_columns(widths))
     elif isinstance(separator, str):
-        split = lambda text: text.split(separator)
+        def split(text):
+            return text.split(separator)
     elif isinstance(separator, re.Pattern):
         split = separator.split
     elif isinstance(pattern, str):
@@ -182,6 +185,7 @@ def records(iterable, *, separator=None, widths=None, pattern=None):
     elif isinstance(pattern, re.Pattern):
         split = pattern.findall
     else:
-        split = lambda text: text.split()
+        def split(text):
+            text.split()
     for text in iterable:
         yield LazyRecord(text, split)

@@ -1,29 +1,32 @@
+# pylint: disable=missing-docstring
 from unittest import TestCase
 
 import re
 
 from awking import RangeGrouper, LazyRecord
-from awking import ensure_predicate, make_columns, records
+from awking import _ensure_predicate, _make_columns, records
 
 
 class TestEnsurePredicate(TestCase):
     def test_string(self):
-        predicate = ensure_predicate('^a')
+        predicate = _ensure_predicate('^a')
         self.assertTrue(callable(predicate))
 
     def test_regexp(self):
-        predicate = ensure_predicate(re.compile('^a'))
+        predicate = _ensure_predicate(re.compile('^a'))
         self.assertTrue(callable(predicate))
 
     def test_function(self):
-        def func(param):  # pylint: disable=unused-argument
+        # noinspection PyUnusedLocal
+        # pylint: disable=unused-argument
+        def func(param):
             return True
-        predicate = ensure_predicate(func)
+        predicate = _ensure_predicate(func)
         self.assertTrue(callable(predicate))
 
     def test_invalid(self):
         with self.assertRaises(TypeError):
-            ensure_predicate(5)
+            _ensure_predicate(5)
 
 
 class TestRangeGrouper(TestCase):
@@ -100,6 +103,8 @@ class TestLazyRecord(TestCase):
         record = LazyRecord(text, lambda x: x.split())
         self.assertEqual(3, len(record))
         with self.assertRaises(IndexError):
+            # noinspection PyStatementEffect
+            # pylint: disable=pointless-statement
             record[3]
 
     def test_full_range(self):
@@ -115,14 +120,14 @@ class TestLazyRecord(TestCase):
 
 class TestMakeColumns(TestCase):
     def test_one(self):
-        self.assertEqual([(0, 5)], make_columns([5]))
+        self.assertEqual([(0, 5)], _make_columns([5]))
 
     def test_two(self):
-        self.assertEqual([(0, 3), (3, 5)], make_columns([3, 2]))
+        self.assertEqual([(0, 3), (3, 5)], _make_columns([3, 2]))
 
     def test_tail(self):
         self.assertEqual([(0, 3), (3, 5), (5, None)],
-                         make_columns([3, 2, ...]))
+                         _make_columns([3, 2, ...]))
 
 
 class TestRecords(TestCase):
