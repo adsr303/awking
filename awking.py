@@ -161,7 +161,7 @@ def make_columns(widths):
 def records(iterable, *, separator=None, widths=None, pattern=None):
     """Generates LazyRecords from iterable of strings.
 
-    Without extra argumets each string is split on whitespace.
+    Without extra arguments each string is split on whitespace.
 
     `separator`: str or re.Pattern on which input will be split (AWK: FS)
 
