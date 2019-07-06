@@ -168,6 +168,8 @@ class TestRecords(TestCase):
                          next(records(lines, pattern=re.compile('[a-z]+')))[:])
 
 
-class TestDocstrings(TestCase):
-    def test_docstrings(self):
-        self.assertEqual(0, doctest.testmod(awking).failed)
+# noinspection PyUnusedLocal
+# pylint: disable=unused-argument
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite(awking))
+    return tests
