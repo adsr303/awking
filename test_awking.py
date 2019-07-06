@@ -1,10 +1,12 @@
 # pylint: disable=missing-docstring
 from unittest import TestCase
+import doctest
 
 import re
 
 from awking import RangeGrouper, LazyRecord
 from awking import _ensure_predicate, _make_columns, records
+import awking
 
 
 class TestEnsurePredicate(TestCase):
@@ -164,3 +166,8 @@ class TestRecords(TestCase):
         lines = ['abx-something--rrr']
         self.assertEqual(['abx', 'something', 'rrr'],
                          next(records(lines, pattern=re.compile('[a-z]+')))[:])
+
+
+class TestDocstrings(TestCase):
+    def test_docstrings(self):
+        self.assertEqual(0, doctest.testmod(awking).failed)

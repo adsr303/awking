@@ -186,6 +186,6 @@ def records(iterable, *, separator=None, widths=None, pattern=None):
         split = pattern.findall
     else:
         def split(text):
-            text.split()
+            return text.split()
     for text in iterable:
         yield LazyRecord(text, split)
