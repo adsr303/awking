@@ -1,4 +1,5 @@
 # awking
+
 Make it easier to use Python as an AWK replacement.
 
 ## Basic usage
@@ -55,8 +56,8 @@ saml      5987  0.7  1.5 1237740 119876 ?      Sl   Dec26  14:05 /opt/google/chr
 root      6115  0.0  0.0      0     0 ?        S    Dec27   0:06 [kworker/0:2]
 '''
 
-for r in records(ps_aux.splitlines(), widths=[7, 58, ...]):
-    print(r[0], r[-1])
+for user, _, command in records(ps_aux.splitlines(), widths=[7, 58, ...]):
+    print(user, command)
 ```
 
 This will output:
