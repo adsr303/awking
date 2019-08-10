@@ -1,12 +1,11 @@
 # pylint: disable=missing-docstring
-from unittest import TestCase
 import doctest
-
 import re
+from unittest import TestCase
 
-from awking import RangeGrouper, LazyRecord
-from awking import _ensure_predicate, _make_columns, records
 import awking
+from awking import (LazyRecord, RangeGrouper, _ensure_predicate, _make_columns,
+                    records)
 
 
 class TestEnsurePredicate(TestCase):

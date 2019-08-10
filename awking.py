@@ -1,9 +1,9 @@
 """Make it easier to use Python as an AWK replacement."""
 
+import re
 from collections import deque
 from collections.abc import Callable
 from functools import partial
-import re
 
 
 def _ensure_predicate(value):
@@ -136,8 +136,10 @@ class LazyRecord:
         return self.text
 
     def __repr__(self):
-        return '{}({}, {})'.format(type(self), repr(self.text),
-                                   repr(self.split))
+        split_name = getattr(self.split, '__name__',
+                             self.split.__class__.__qualname__)
+        return '{}({}, {})'.format(self.__class__.__qualname__,
+                                   repr(self.text), split_name)
 
 
 def _split_columns(columns, text):
