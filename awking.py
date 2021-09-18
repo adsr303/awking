@@ -59,10 +59,7 @@ class RangeGrouper:
 
     def __next__(self):
         while True:
-            try:
-                item = next(self.iterable)
-            except StopIteration:
-                raise StopIteration()
+            item = next(self.iterable)  # May raise StopIteration
             # pylint: disable=no-else-return
             if not self.current:
                 if self.begin(item):
@@ -86,8 +83,8 @@ class RangeGrouper:
         while True:
             try:
                 item = next(self.iterable)
-            except StopIteration:
-                raise _EndOfGroup()
+            except StopIteration as ex:
+                raise _EndOfGroup from ex
             if self.end(item):
                 self.current = None
             return item
