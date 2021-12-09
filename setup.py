@@ -4,7 +4,7 @@ from setuptools import setup
 README = (pathlib.Path(__file__).parent / 'README.md').read_text()
 
 setup(name='awking',
-      version='1.1.1',
+      version='1.1.2',
       description='Make it easier to use Python as an AWK replacement',
       long_description=README,
       long_description_content_type='text/markdown',
