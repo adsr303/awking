@@ -135,8 +135,7 @@ class LazyRecord:
     def __repr__(self):
         split_name = getattr(self.split, '__name__',
                              self.split.__class__.__qualname__)
-        return '{}({}, {})'.format(self.__class__.__qualname__,
-                                   repr(self.text), split_name)
+        return f'{self.__class__.__qualname__}({repr(self.text)}, {split_name})'
 
 
 def _split_columns(columns, text):
